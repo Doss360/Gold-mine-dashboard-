@@ -1,0 +1,383 @@
+<DOCUMENT filename="geoscan_control_dashboard_pro_v4.html">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow:wght@400;500;600;700&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --gold:#C8930A;--gold-l:#F5C842;--gold-dim:#7A5A06;
+  --bg0:#0B0D0F;--bg1:#111418;--bg2:#171C22;--bg3:#1E2530;
+  --border:#2A3340;--border2:#3A4858;
+  --text:#C8D4E0;--text2:#7A9AB8;--text3:#4A6480;
+  --red:#E84040;--green:#3DCC7A;--amber:#F0A020;
+  --teal:#28C8A8;--purple:#8870E8;
+  --eco-excellent:#2ECC71;--eco-good:#4CAF50;--eco-moderate:#F4C542;--eco-caution:#FF9800;--eco-low:#E74C3C;
+}
+body{font-family:'Barlow',sans-serif;background:var(--bg0);color:var(--text);font-size:13px;padding:0;line-height:1.45}
+.shell{display:grid;grid-template-rows:54px 1fr;height:740px;overflow:hidden;border:1px solid var(--border);border-radius:10px;box-shadow:0 0 50px rgba(197,147,10,0.18)}
+.topbar{background:var(--bg1);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 24px;gap:24px}
+.logo{font-family:'Share Tech Mono',monospace;font-size:18px;color:var(--gold-l);letter-spacing:3px;font-weight:600}
+.logo span{color:var(--text3)}
+.status-pill{font-size:12.5px;padding:5px 16px;border-radius:30px;font-weight:700;letter-spacing:1px;display:flex;align-items:center;gap:5px}
+.active{background:#0D3020;color:var(--green);border:1px solid #1A4A30}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:20px;font-size:12.5px;color:var(--text3)}
+.mono{font-family:'Share Tech Mono',monospace;font-size:12.5px}
+.main{display:grid;grid-template-columns:255px 1fr 285px;overflow:hidden}
+
+/* Left Panel */
+.left{background:var(--bg1);border-right:1px solid var(--border);padding:18px;overflow-y:auto;display:flex;flex-direction:column;gap:18px}
+.section-label{font-size:10.5px;font-weight:700;letter-spacing:2px;color:var(--text3);text-transform:uppercase;margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.section-label::before{content:'';display:block;width:14px;height:1px;background:var(--gold-dim)}
+.stat-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border)}
+.stat-val{font-family:'Share Tech Mono',monospace;font-size:13.5px;color:var(--gold-l);font-weight:500}
+.stat-val.green{color:var(--green)}
+.stat-val.teal{color:var(--teal)}
+.btn{width:100%;padding:10px 14px;border-radius:8px;font-size:13.5px;font-weight:600;cursor:pointer;border:1px solid;letter-spacing:0.6px;transition:all .2s}
+.btn-scan{background:#0A2A10;color:var(--green);border-color:#1A4A20}
+.btn-pause{background:#2A1A00;color:var(--amber);border-color:#4A3A10}
+.btn-stop{background:#2A0808;color:var(--red);border-color:#4A1414}
+.progress-bar{width:100%;height:9px;background:var(--bg3);border-radius:4px;overflow:hidden;margin:8px 0}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--gold-dim),var(--gold-l));border-radius:4px;transition:width .6s cubic-bezier(0.4,0,0.2,1)}
+
+/* Map Area */
+.map-area{position:relative;overflow:hidden;background:var(--bg2)}
+canvas#terrain{width:100%;height:100%;display:block}
+.map-overlay{position:absolute;top:0;left:0;right:0;bottom:0;pointer-events:none}
+.scan-line{position:absolute;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,var(--teal),transparent);opacity:0.8;animation:sweep 2.6s linear infinite;box-shadow:0 0 15px var(--teal)}
+@keyframes sweep{0%{top:0;opacity:0.95}100%{top:100%;opacity:0}}
+.drone-dot{position:absolute;width:15px;height:15px;background:var(--gold-l);border-radius:50%;box-shadow:0 0 14px 5px var(--gold-l);transform:translate(-50%,-50%);animation:blink 1.1s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.35}}
+.coord-badge{position:absolute;bottom:16px;left:16px;font-family:'Share Tech Mono',monospace;font-size:11.5px;color:var(--text2);background:rgba(11,13,15,.94);padding:7px 14px;border-radius:6px;border:1px solid var(--border)}
+.legend{position:absolute;top:16px;right:16px;background:rgba(11,13,15,.94);padding:10px 14px;border-radius:8px;border:1px solid var(--border);font-size:10.5px;width:172px}
+.legend-item{display:flex;align-items:center;gap:7px;font-size:10.5px;margin-bottom:3px}
+
+/* Right Panel */
+.right{background:var(--bg1);border-left:1px solid var(--border);padding:18px;overflow-y:auto;display:flex;flex-direction:column;gap:16px}
+.mineral-tag{display:flex;align-items:center;gap:9px;padding:9px 11px;background:var(--bg2);border-radius:8px;border:1px solid var(--border);margin-bottom:7px}
+.m-dot{width:11px;height:11px;border-radius:50%;flex-shrink:0}
+.m-name{flex:1;font-size:12.5px;font-weight:600}
+.m-conf{font-family:'Share Tech Mono',monospace;font-size:12.5px}
+.conf-bar{height:4px;background:var(--border);border-radius:3px;margin-top:5px;overflow:hidden}
+.conf-fill{height:100%;border-radius:3px}
+.site-card{padding:11px 13px;background:var(--bg2);border-radius:9px;border:1px solid var(--border);margin-bottom:9px;position:relative;overflow:hidden}
+.site-name{font-weight:700;font-size:13px}
+.site-meta{font-size:11.5px;color:var(--text2);margin:4px 0 7px;line-height:1.35}
+.site-prob{font-family:'Share Tech Mono',monospace;font-size:15px;font-weight:600;color:var(--gold-l)}
+.site-bar{height:5px;background:var(--border);border-radius:4px;margin-top:6px;overflow:hidden}
+.site-fill{height:100%;background:linear-gradient(90deg,var(--teal),var(--gold-l));transition:width .5s}
+.prob-label{position:absolute;top:12px;right:13px;font-size:11px;padding:1px 7px;border-radius:4px;font-weight:600}
+.prob-high{background:#0F2A1C;color:#3DCC7A;border:1px solid #1A4A30}
+.prob-mod{background:#2A2008;color:#F5C842;border:1px solid #4A3A10}
+.alert-box{padding:9px 13px;border-radius:8px;font-size:12.5px;line-height:1.55;margin-bottom:9px}
+.eco-card{padding:11px 13px;background:var(--bg2);border-radius:9px;border:1px solid var(--border);margin-bottom:9px}
+.eco-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.eco-title{font-size:12.5px;font-weight:600}
+.eco-status{font-size:11px;padding:2px 8px;border-radius:12px;font-weight:600}
+.eco-bar{height:5px;background:var(--border);border-radius:4px;overflow:hidden;margin:6px 0}
+.eco-fill{height:100%;border-radius:4px;transition:width .5s}
+.eco-note{font-size:10.8px;color:var(--text3);line-height:1.4}
+.footer-buttons{margin-top:auto;padding-top:14px;border-top:1px solid var(--border);display:flex;gap:10px}
+.footer-buttons .btn{flex:1;padding:9px;font-size:13px}
+</style>
+
+<div class="shell">
+  <div class="topbar">
+    <div class="logo">GEO<span>/</span>SCAN <span style="font-size:14px;letter-spacing:1.5px;color:var(--text3)">PROFESSIONAL v4</span></div>
+    <div class="status-pill active">● LIVE SCANNING • EIA REAL-TIME MONITORING</div>
+    <div style="font-size:13px;color:var(--text3);font-weight:500">Mission: Ashanti Gold Belt — Zone 4B • Ghana • EPA Compliant</div>
+    <div class="topbar-right">
+      <span class="mono batt">⬡ 77%</span>
+      <span class="mono signal">▲ 5G -55dBm • RTK FIXED</span>
+      <span class="mono" style="color:var(--gold)">ALT: 47m • WIND: 3.8 m/s</span>
+      <span class="mono" id="clock" style="color:var(--text2)">--:--:--</span>
+    </div>
+  </div>
+
+  <div class="main">
+    <!-- Left Panel -->
+    <div class="left">
+      <div>
+        <div class="section-label">MISSION STATUS</div>
+        <div class="stat-row"><span style="color:var(--text2)">Coverage</span><span class="stat-val" id="cov-val">84%</span></div>
+        <div class="progress-bar"><div class="progress-fill" id="prog-fill" style="width:84%"></div></div>
+        <div class="stat-row"><span style="color:var(--text2)">Area scanned</span><span class="stat-val teal" id="area-val">4.2 km²</span></div>
+        <div class="stat-row"><span style="color:var(--text2)">Passes completed</span><span class="stat-val">25 / 28</span></div>
+        <div class="stat-row"><span style="color:var(--text2)">Time remaining</span><span class="stat-val">5 min</span></div>
+        <div class="stat-row"><span style="color:var(--text2)">Detections</span><span class="stat-val green" id="det-val">248</span></div>
+        <div class="stat-row"><span style="color:var(--text2)">Avg. mining probability</span><span class="stat-val" id="avg-prob">88%</span></div>
+      </div>
+
+      <div>
+        <div class="section-label">SPECTROMETER CONFIGURATION</div>
+        <div class="laser-toggle"><span style="color:var(--text2)">NIR 850nm</span><div class="tog on" id="tog-nir"></div></div>
+        <div class="laser-toggle"><span style="color:var(--text2)">SWIR 1550nm</span><div class="tog on" id="tog-swir"></div></div>
+        <div class="laser-toggle"><span style="color:var(--text2)">LiDAR 1064nm</span><div class="tog on" id="tog-lidar"></div></div>
+        <div class="laser-toggle"><span style="color:var(--text2)">UV 355nm</span><div class="tog on" id="tog-uv"></div></div>
+      </div>
+
+      <div>
+        <div class="section-label">SCAN ALTITUDE</div>
+        <input type="range" min="20" max="130" value="47" id="alt-slider" style="width:100%;accent-color:var(--gold)">
+        <div style="text-align:center;font-family:'Share Tech Mono',monospace;color:var(--gold-l);margin-top:4px" id="alt-out">47 m</div>
+      </div>
+
+      <div style="margin-top:auto;display:flex;flex-direction:column;gap:9px">
+        <button class="btn btn-scan">▶ RESUME FULL SPECTRAL SCAN</button>
+        <button class="btn btn-pause">⏸ PAUSE &amp; MARK PRIORITY ZONES</button>
+        <button class="btn btn-stop">■ ABORT &amp; RETURN TO BASE</button>
+      </div>
+    </div>
+
+    <!-- Center: Map -->
+    <div class="map-area">
+      <canvas id="terrain"></canvas>
+      <div class="map-overlay">
+        <div class="scan-line"></div>
+        <div class="drone-dot" id="drone" style="top:41%;left:57%"></div>
+        <div id="site-labels"></div>
+        <div class="coord-badge" id="coord">5°43'12"N  1°58'44"W  •  Pass 25/28 • RTK • EIA LIVE</div>
+        
+        <div class="legend">
+          <div style="color:var(--text3);margin-bottom:6px;font-size:10px">ECONOMIC MINING PROBABILITY</div>
+          <div class="legend-item" style="color:#3DCC7A"><span style="display:inline-block;width:11px;height:11px;background:#3DCC7A;border-radius:50%"></span> ≥90%  High Priority</div>
+          <div class="legend-item" style="color:#F5C842"><span style="display:inline-block;width:11px;height:11px;background:#F5C842;border-radius:50%"></span> 75–89%  Moderate-High</div>
+          <div class="legend-item" style="color:#F0A020"><span style="display:inline-block;width:11px;height:11px;background:#F0A020;border-radius:50%"></span> 60–74%  Viable</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Panel -->
+    <div class="right">
+      <div class="section-label">LIVE DETECTIONS</div>
+      <div class="alert-box alert-gold">⚡ STRONG GOLD SIGNATURE — Grid C7 • 95% confidence • 420m strike length</div>
+      <div class="alert-box alert-info">SULFIDE-QUARTZ VEIN CLUSTER — Grid D4 • 84% • Open at depth</div>
+
+      <div class="section-label">MINERAL SPECTRAL MATCH</div>
+      <div id="minerals"></div>
+
+      <div class="section-label">HIGH-POTENTIAL MINING SITES</div>
+      <div id="mining-sites"></div>
+
+      <div class="section-label">ENVIRONMENTAL IMPACT ASSESSMENT (REAL-TIME)</div>
+      <div id="eco-impact"></div>
+
+      <div class="section-label">SPECTRAL CONFIDENCE</div>
+      <div id="spectra"></div>
+
+      <div class="footer-buttons">
+        <button class="btn" style="background:#0A1830;color:var(--teal);border-color:#1A3848">⬇ EXPORT GEOJSON + FULL EIA LAYERS</button>
+        <button class="btn" style="background:#1A1000;color:var(--gold);border-color:var(--gold-dim)">📄 JORC + EPA ENVIRONMENTAL REPORT</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Clock
+function tick(){const n=new Date();document.getElementById('clock').textContent=n.toTimeString().slice(0,8)}
+tick();setInterval(tick,1000);
+
+// Toggles
+document.querySelectorAll('.tog').forEach(t=>t.addEventListener('click',()=>{t.classList.toggle('on');t.classList.toggle('off')}));
+
+// Altitude
+const as=document.getElementById('alt-slider');
+as.addEventListener('input',()=>{document.getElementById('alt-out').textContent=as.value + ' m'});
+
+// Minerals
+const minerals = [
+  {name:'Gold ore (Au)',color:'#F5C842',conf:95},
+  {name:'Quartz vein system',color:'#97C459',conf:86},
+  {name:'Hematite alteration',color:'#D85A30',conf:79},
+  {name:'Chalcopyrite',color:'#378ADD',conf:72},
+  {name:'Arsenopyrite',color:'#BA7517',conf:67},
+  {name:'Graphitic schist',color:'#6B8E9E',conf:54}
+];
+const mc = document.getElementById('minerals');
+minerals.forEach(m => {
+  mc.innerHTML += `<div class="mineral-tag">
+    <div class="m-dot" style="background:${m.color}"></div>
+    <div style="flex:1"><div style="display:flex;justify-content:space-between"><span class="m-name">${m.name}</span><span class="m-conf" style="color:${m.color}">${m.conf}%</span></div>
+    <div class="conf-bar"><div class="conf-fill" style="width:${m.conf}%;background:${m.color}"></div></div></div>
+  </div>`;
+});
+
+// Mining Sites
+const miningSites = [
+  {name:'Obuasi Extension (C7)',prob:94,mineral:'High-grade Au',reserve:'2.1 Moz est.',depth:'80–240m',strike:'420m',x:0.64,y:0.34},
+  {name:'Konongo North Vein (D4)',prob:89,mineral:'Au + Cu',reserve:'1.2 Moz est.',depth:'120–310m',strike:'280m',x:0.39,y:0.51},
+  {name:'Ashanti Deep Target (B5)',prob:86,mineral:'Free-milling Au',reserve:'1.7 Moz est.',depth:'200–450m',strike:'510m',x:0.23,y:0.67},
+  {name:'Sanso Ridge Zone (E3)',prob:81,mineral:'Au + Pyrite',reserve:'0.85 Moz est.',depth:'45–180m',strike:'190m',x:0.52,y:0.26},
+  {name:'Pompo Valley Shear (A6)',prob:77,mineral:'Au',reserve:'0.65 Moz est.',depth:'90–260m',strike:'310m',x:0.15,y:0.79},
+  {name:'Adansi South Contact (F2)',prob:72,mineral:'Au + Chalcopyrite',reserve:'0.55 Moz est.',depth:'150–380m',strike:'240m',x:0.78,y:0.45},
+  {name:'Manhyia Trend (C3)',prob:68,mineral:'Au',reserve:'0.4 Moz est.',depth:'60–150m',strike:'170m',x:0.47,y:0.19},
+  {name:'Akrokerri West (D6)',prob:63,mineral:'Au',reserve:'0.3 Moz est.',depth:'110–290m',strike:'135m',x:0.71,y:0.62}
+];
+
+const sitesContainer = document.getElementById('mining-sites');
+miningSites.forEach(site => {
+  const probClass = site.prob >= 90 ? 'prob-high' : 'prob-mod';
+  sitesContainer.innerHTML += `
+    <div class="site-card">
+      <div style="display:flex;justify-content:space-between;align-items:start">
+        <div>
+          <div class="site-name">${site.name}</div>
+          <div class="site-meta">${site.mineral} • Strike: ${site.strike} • Depth: ${site.depth}</div>
+        </div>
+        <div style="text-align:right">
+          <div class="prob-label ${probClass}">${site.prob}%</div>
+          <div class="site-prob">${site.reserve}</div>
+        </div>
+      </div>
+      <div class="site-bar"><div class="site-fill" style="width:${site.prob}%"></div></div>
+    </div>`;
+});
+
+// === REFINED ENVIRONMENTAL IMPACT ASSESSMENT ===
+const ecoData = [
+  {param:'Water Quality & Pollution Risk',status:'Low Risk',score:91,color:'var(--eco-excellent)',note:'No detectable mercury or arsenic exceedance in monitored streams. Turbidity within EPA limits.'},
+  {param:'Biodiversity & Habitat Impact',status:'Very Low',score:94,color:'var(--eco-excellent)',note:'Minimal overlap with sensitive ecosystems. No critical habitats affected in high-probability zones.'},
+  {param:'Soil Erosion & Land Degradation',status:'Low',score:87,color:'var(--eco-good)',note:'Stable terrain with low slope angles. Vegetation buffer zones maintained.'},
+  {param:'Heavy Metal Contamination',status:'Negligible',score:96,color:'var(--eco-excellent)',note:'Below WHO/EPA Ghana thresholds for As, Hg, Pb, Cd in soil and water samples.'},
+  {param:'Deforestation & Vegetation Loss',status:'Minimal',score:89,color:'var(--eco-good)',note:'0.6% canopy impact projected. Reforestation plan integrated.'},
+  {param:'Air Quality & Dust Emission',status:'Low',score:85,color:'var(--eco-good)',note:'Drone-based operations only. No significant particulate matter generated.'},
+  {param:'Overall EIA Compliance Score',status:'Excellent',score:92,color:'var(--eco-excellent)',note:'Fully aligned with EPA Ghana Act 490 and Environmental Assessment Regulations.'}
+];
+
+const ecoContainer = document.getElementById('eco-impact');
+ecoData.forEach(item => {
+  let statusColor = item.color;
+  ecoContainer.innerHTML += `
+    <div class="eco-card">
+      <div class="eco-header">
+        <div class="eco-title">${item.param}</div>
+        <div class="eco-status" style="background:${statusColor}20;color:${statusColor}">${item.status}</div>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+        <span style="font-family:'Share Tech Mono',monospace;font-size:15px;color:${statusColor}">${item.score}%</span>
+      </div>
+      <div class="eco-bar"><div class="eco-fill" style="width:${item.score}%;background:${statusColor}"></div></div>
+      <div class="eco-note">${item.note}</div>
+    </div>`;
+});
+
+// Spectral bands
+const bands = [
+  {label:'NIR 850nm — Alteration &amp; Vegetation',val:93,color:'#28C8A8'},
+  {label:'SWIR 1550nm — Gold pathfinder minerals',val:96,color:'#F5C842'},
+  {label:'LiDAR 1064nm — Structural &amp; depth mapping',val:88,color:'#8870E8'},
+  {label:'UV 355nm — Sulfide &amp; arsenopyrite detection',val:81,color:'#E84040'}
+];
+const sp = document.getElementById('spectra');
+bands.forEach(b => {
+  sp.innerHTML += `<div style="padding:7px 0;border-bottom:1px solid var(--border)">
+    <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+      <span style="font-size:11.5px;color:var(--text2)">${b.label}</span>
+      <span style="font-family:'Share Tech Mono',monospace;color:${b.color}">${b.val}%</span>
+    </div>
+    <div class="conf-bar"><div class="conf-fill" style="width:${b.val}%;background:${b.color}"></div></div>
+  </div>`;
+});
+
+// Terrain Canvas
+const canvas = document.getElementById('terrain');
+function drawTerrain() {
+  const W = canvas.offsetWidth || 740;
+  const H = canvas.offsetHeight || 540;
+  canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext('2d');
+
+  ctx.fillStyle = '#0F1419'; ctx.fillRect(0,0,W,H);
+
+  // Grid
+  ctx.strokeStyle = '#1E2530'; ctx.lineWidth = 1.5;
+  const gs = 42;
+  for(let x=0; x<=W; x+=gs){ ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke(); }
+  for(let y=0; y<=H; y+=gs){ ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); }
+
+  // Scanned area
+  const scannedW = W * 0.84;
+  ctx.fillStyle = 'rgba(40,200,168,0.07)';
+  ctx.fillRect(0,0,scannedW,H);
+  ctx.strokeStyle = 'rgba(40,200,168,0.28)'; ctx.lineWidth = 3;
+  ctx.strokeRect(0,0,scannedW,H);
+
+  // Scan paths
+  for(let i=0; i<25; i++){
+    const y = 22 + (i * (H-48)/27);
+    ctx.beginPath();
+    ctx.strokeStyle = 'rgba(245,200,66,0.16)';
+    ctx.lineWidth = 2;
+    ctx.moveTo(26,y); ctx.lineTo(scannedW-18,y); ctx.stroke();
+  }
+
+  // Mining Site Overlays
+  miningSites.forEach(site => {
+    const sx = site.x * W;
+    const sy = site.y * H;
+    const radius = site.prob >= 90 ? 26 : (site.prob >= 80 ? 21 : 16);
+
+    const grad = ctx.createRadialGradient(sx,sy, radius, sx,sy, radius+22);
+    grad.addColorStop(0, 'rgba(245,200,66,0)');
+    grad.addColorStop(1, site.prob>=90 ? 'rgba(61,204,122,0.4)' : 'rgba(245,200,66,0.35)');
+    ctx.fillStyle = grad;
+    ctx.beginPath(); ctx.arc(sx,sy,radius+22,0,Math.PI*2); ctx.fill();
+
+    ctx.shadowBlur = 16;
+    ctx.shadowColor = site.prob>=90 ? '#3DCC7A' : '#F5C842';
+    ctx.fillStyle = site.prob>=90 ? '#3DCC7A' : '#F5C842';
+    ctx.beginPath(); ctx.arc(sx,sy,radius,0,Math.PI*2); ctx.fill();
+    ctx.shadowBlur = 0;
+
+    ctx.fillStyle = '#0B0D0F';
+    ctx.font = '700 12px Share Tech Mono,monospace';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(site.prob + '%', sx, sy);
+  });
+
+  // Grid labels
+  'ABCDEFGH'.split('').forEach((c,i) => {
+    ctx.fillStyle = 'rgba(74,100,128,0.8)';
+    ctx.font = '700 10px Barlow,sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(c, 32 + i*(W/8.2), 19);
+  });
+  for(let i=1; i<=8; i++){
+    ctx.fillStyle = 'rgba(74,100,128,0.8)';
+    ctx.font = '700 10px Barlow,sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText(i.toString(), 14, i*(H/8)+6);
+  }
+}
+
+// Drone animation
+let dt = 0;
+const dEl = document.getElementById('drone');
+function animDrone(){
+  dt += 0.0085;
+  const row = Math.floor(dt * 2.3) % 12;
+  const frac = (dt * 2.3) % 1;
+  const top = 14 + row * 7.2;
+  const left = row % 2 === 0 ? 14 + frac*61 : 72 - frac*54;
+  dEl.style.top = top + '%';
+  dEl.style.left = left + '%';
+  requestAnimationFrame(animDrone);
+}
+
+// Live counters
+let cov = 84, dets = 248, avgProb = 88;
+setInterval(() => {
+  if(cov < 100){
+    cov = Math.min(100, cov + Math.random()*0.55);
+    dets += Math.floor(Math.random()*3) + 2;
+    avgProb = Math.min(97, avgProb + Math.random()*0.6);
+  }
+  document.getElementById('cov-val').textContent = Math.round(cov) + '%';
+  document.getElementById('prog-fill').style.width = cov + '%';
+  document.getElementById('area-val').textContent = (4.2 + (cov-84)*0.028).toFixed(1) + ' km²';
+  document.getElementById('det-val').textContent = dets;
+  document.getElementById('avg-prob').textContent = Math.round(avgProb) + '%';
+}, 1250);
+
+window.addEventListener('resize', drawTerrain);
+setTimeout(() => { drawTerrain(); animDrone(); }, 150);
+</script>
+</DOCUMENT>
